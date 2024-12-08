@@ -27,9 +27,11 @@ namespace DodgeGame
         private bool allowmoves = false;
         public bool Allowmoves
         {
+            get => allowmoves;
             set
             {
                 allowmoves = value;
+                OnPropertyChanged();
                 OnPropertyChanged(nameof(EnableButton));
             }
         }
@@ -71,8 +73,7 @@ namespace DodgeGame
             life = 3;
             
             Allowmoves = false;
-            StartPlayer();
-            
+            StartPlayer();    
         }
 
         public async void StartPlayer() { 

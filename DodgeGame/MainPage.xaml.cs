@@ -59,9 +59,6 @@
             base.OnSizeAllocated(width, height);
             GameLayout.WidthRequest = width;
             GameLayout.HeightRequest = height - ControlsGrid.Height;
-            double startheight = StartButton.Height;
-            double startwidth = StartButton.Width;
-            GameLayout.SetLayoutBounds(StartButton, new Rect(width/2-startwidth/2, (height-ControlsGrid.Height)/2-startheight/2, startwidth, startheight));
         }
 
         // Start Button means start the game
