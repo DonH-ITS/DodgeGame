@@ -1,38 +1,44 @@
-﻿
-using System.Runtime.CompilerServices;
-using System.Timers;
-
-namespace DodgeGame
+﻿namespace DodgeGame
 {
     public class Enemy
     {
         private static double size;
         private static double height;
         private static double width;
-        private static Player playerref;
-        private static AbsoluteLayout mainL;
-        private static IDispatcher mainDispatch;
-        private static Random random;
+        private static Player? playerref;
+        private static AbsoluteLayout? mainL;
+        private static IDispatcher? mainDispatch;
+        private static readonly Random random = new();
 
 
-        public event EventHandler RemoveEnemy;
+        public event EventHandler? RemoveEnemy;
         private BoxView box;
         private readonly bool top;
         private System.Timers.Timer timer;
-        private Task<bool> animation;
+        private Task<bool>? animation;
 
+        // These fields are shared with all Enemy objects so they should be static
+        // The mainLayout is needed to know where to add the enemy
+        // Dispatcher is needed to sometimes draw on the Main UI Thread
+        // A Player object reference is needed to find out if enemy collides with player
         public static void SetStaticProperties(double s, Player player, AbsoluteLayout view, IDispatcher dispatcher) {
             size = s; playerref = player; mainL = view; mainDispatch = dispatcher;
             height = mainL.Height;
             width = mainL.Width;
-            random = new Random();
         }
 
+        // If the Page is disappearing, set the mainL to null, this stops some crashes on closing
         public static void RemoveMainLayoutRef() {
             mainL = null;
         }
 
         public Enemy() {
+            // Our timer means the update is checked every 20ms for every enemy object
+            timer = new System.Timers.Timer
+            {
+                Interval = 20
+            };
+
             // Starting Position, at top or from right
             top = random.Next(2) == 0;
             box = new BoxView()
@@ -54,10 +60,7 @@ namespace DodgeGame
                 x = (int)(width - size);
                 y = random.Next((int)(height - size + 1));
             }
-            timer = new System.Timers.Timer
-            {
-                Interval = 20
-            };
+          
             timer.Elapsed += (s, e) =>
             {
                 Update();
@@ -71,16 +74,19 @@ namespace DodgeGame
             Task.Run(() => StartMove());
         }
 
+        // Every 20ms check if an enemy intersects with the player character
         private void Update() {
-            // See if the box has collided with the player
+            // The current position of the enemy (the animation changes its position
             Rect rect = new Rect(box.TranslationX, box.TranslationY, size, size);            
         }
 
         public async Task StartMove() {
+            // Give it a random delay before actually moving
             int randDelay = random.Next(200, 1000);
             await Task.Delay(randDelay);
+
+            // Make the box have a random speed for its animation
             uint randSpeed = (uint)random.Next(1700, 5000);
-            
             if (top) {
                 animation = box.TranslateTo(box.TranslationX, height, randSpeed);
             }
@@ -97,10 +103,14 @@ namespace DodgeGame
         }
 
         public void FullyRemoveEnemy() {
-            mainDispatch.Dispatch(() => { 
-                if(mainL != null)
-                    mainL.Remove(box); 
-            });
+            // First delete the box from the mainlayout
+            if (mainDispatch != null) {
+                mainDispatch.Dispatch(() =>
+                {
+                    if (mainL != null)
+                        mainL.Remove(box);
+                });
+            }
             // Remove the timer's resources
             timer.Stop();
             timer.Dispose();

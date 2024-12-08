@@ -4,15 +4,17 @@ namespace DodgeGame
 {
     public class Player : INotifyPropertyChanged
     {        
-        Task<bool> animation = null;
+        //Fields
+        Task<bool>? animation = null;
         private double size;
         private Grid box;
         private System.Timers.Timer timer;
         private double maxHeight, maxWidth;
-        private bool overedge = false, allowmoves = false;
+        private bool overedge = false;
         private int life;
         private int hits;
 
+        //Properties and associated fields
         private Rect pos;
         public Rect Position
         {
@@ -22,6 +24,7 @@ namespace DodgeGame
             }
         }
 
+        private bool allowmoves = false;
         public bool Allowmoves
         {
             set
@@ -30,7 +33,6 @@ namespace DodgeGame
                 OnPropertyChanged(nameof(EnableButton));
             }
         }
-
         public bool EnableButton
         {
             get
@@ -39,10 +41,10 @@ namespace DodgeGame
             }
         }
 
-
-
+        // Commands
         public Command MoveCommand { get; }
-        public Command TapCommand { get; }
+
+        // Constructor
         public Player(double size, AbsoluteLayout mainl, double maxh, double maxw) {
             MoveCommand = new Command<string>(async (dir) => await MovePlayer(dir));
 
@@ -58,7 +60,6 @@ namespace DodgeGame
             this.size = size;
             mainl.Add(box);
             pos = new Rect(0, 0, size, size);
-            //mainl.SetLayoutBounds(box, pos);
             timer = new System.Timers.Timer
             {
                 Interval = 20
@@ -89,7 +90,7 @@ namespace DodgeGame
         public async void GotHit() {
             hits++;
             if (hits < life) {
-                //do something if hit
+                //do something if hit, change the colour of the character?
             }
             else if(hits >= life) {
                 // Game Over
@@ -101,6 +102,9 @@ namespace DodgeGame
             }
         }
 
+        // Every 20ms check the current position of the box and update the pos Rectangle. 
+        // If it has gone over the edge, cancel the animation and signal the animation to fix the translation.
+        // Do not modify box.TranslationX here as it is in a different thread than the UI
         private void Update() {
             if (box.TranslationY < 0 || box.TranslationX < 0 || box.TranslationY > maxHeight - size || box.TranslationX > maxWidth - size) {
                 if (animation != null) {
